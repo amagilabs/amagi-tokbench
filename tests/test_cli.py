@@ -28,6 +28,7 @@ def test_run_end_to_end(fake_server, fake_smi_cmd, tmp_path, capsys, kind, name)
     data = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
     assert data["backend"]["kind"] == kind
     assert "127.0.0.1" not in out.with_suffix(".json").read_text(encoding="utf-8")  # results get shared
+    assert data["vram"]["source"] == "nvidia-smi (custom command)"
     assert [c["name"] for c in data["cases"]] == ["short", "medium", "long"]
     assert data["vram"]["gpus"][0]["name"] == "NVIDIA GeForce RTX 3090"
     assert data["vram"]["peak_mib"] >= 4000

@@ -41,6 +41,13 @@ def split_command(cmd: str) -> List[str]:
     return shlex.split(cmd, posix=True)
 
 
+def public_source(cmd: Optional[str]) -> str:
+    """What goes in the results file: never the command itself, which can name a remote host."""
+    parts = split_command(cmd or "nvidia-smi")
+    first = os.path.basename(parts[0]) if parts else ""
+    return "nvidia-smi" if first.lower() in ("nvidia-smi", "nvidia-smi.exe") else "nvidia-smi (custom command)"
+
+
 class VramSampler:
     """Track per-GPU peak memory.used while the benchmark runs."""
 
@@ -123,5 +130,5 @@ class VramSampler:
             "peak_mib": sum(g["peak_mib"] for g in gpus),
             "total_mib": sum(g["total_mib"] for g in gpus),
             "samples": self.samples,
-            "source": self.command,
+            "source": public_source(self.command),
         }

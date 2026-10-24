@@ -4,7 +4,7 @@ import time
 import pytest
 
 from amagi_tokbench.prompts import CASE_NAMES, CASES, get_cases, prompt_set_hash, with_nonce
-from amagi_tokbench.vram import VramSampler, parse_line, split_command
+from amagi_tokbench.vram import VramSampler, parse_line, public_source, split_command
 
 
 def test_prompt_set_is_pinned():
@@ -71,3 +71,9 @@ def test_split_command_keeps_windows_paths():
 
 def test_split_command_remote():
     assert split_command("ssh gpu-box nvidia-smi") == ["ssh", "gpu-box", "nvidia-smi"]
+
+
+def test_results_never_carry_the_smi_command():
+    assert public_source("nvidia-smi") == "nvidia-smi"
+    assert public_source("/usr/bin/nvidia-smi") == "nvidia-smi"
+    assert public_source("ssh admin@gpu-box.lan nvidia-smi") == "nvidia-smi (custom command)"

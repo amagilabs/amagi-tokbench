@@ -27,7 +27,7 @@
     "peak_mib": 5098.0,
     "total_mib": 24576.0,
     "samples": 68,
-    "source": "ssh llm-testbed nvidia-smi"
+    "source": "nvidia-smi (custom command)"
   },
   "settings": {
     "prompt_set": "v1",
