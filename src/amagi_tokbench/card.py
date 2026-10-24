@@ -159,10 +159,11 @@ def to_markdown(result: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _text_table(headers, rows) -> List[str]:
+def _text_table(headers, rows, left=1) -> List[str]:
     widths = [max(len(h), *(len(r[i]) for r in rows)) if rows else len(h) for i, h in enumerate(headers)]
+
     def fmt(cells):
-        return "  ".join(c.ljust(widths[0]) if i == 0 else c.rjust(widths[i]) for i, c in enumerate(cells))
+        return "  ".join(c.ljust(widths[i]) if i < left else c.rjust(widths[i]) for i, c in enumerate(cells))
     return [fmt(headers)] + [fmt(r) for r in rows]
 
 
@@ -207,14 +208,34 @@ def compare_rows(results: List[dict]) -> List[List[str]]:
 COMPARE_HEADERS = ["run", "backend", "quant", "gen tok/s", "prompt tok/s", "TTFT", "peak VRAM"]
 
 
+def compare_table(results: List[dict]):
+    """(headers, rows, shared): columns that read the same on every row move into `shared`."""
+    headers, rows, shared = list(COMPARE_HEADERS), compare_rows(results), []
+    if len(results) > 1 and len({r[1] for r in rows}) == 1:
+        shared.append(rows[0][1])
+        rows = [[r[0]] + r[2:] for r in rows]
+        headers.pop(1)
+    qi = headers.index("quant")
+    if all(r[qi] == "-" or r[qi].lower() in r[0].lower() for r in rows):
+        rows = [r[:qi] + r[qi + 1:] for r in rows]
+        headers.pop(qi)
+    return headers, rows, shared
+
+
+def _shared_facts(results: List[dict], shared: List[str]) -> List[str]:
+    gpus = sorted({gpu_text(r.get("vram")) for r in results} - {None})
+    return shared + (["GPU: " + ", ".join(gpus)] if gpus else [])
+
+
 def compare_markdown(results: List[dict]) -> str:
     sets = sorted({(r.get("settings") or {}).get("prompt_set", "?") for r in results})
     lines = [f"### amagi-tokbench: {len(results)} runs side by side", ""]
-    lines += _md_table(COMPARE_HEADERS, compare_rows(results), left=3)
-    gpus = sorted({gpu_text(r.get("vram")) for r in results} - {None})
+    headers, rows, shared = compare_table(results)
+    lines += _md_table(headers, rows, left=headers.index("gen tok/s"))
     lines.append("")
-    if gpus:
-        lines.append("GPU: " + ", ".join(gpus) + ".")
+    facts = _shared_facts(results, shared)
+    if facts:
+        lines.append(" · ".join(facts) + ".")
     lines.append(
         f"*Prompt set {', '.join(sets)}; each number is a median from its own run.* "
         f"[{REPO_URL.replace('https://', '')}]({REPO_URL})"
@@ -225,7 +246,10 @@ def compare_markdown(results: List[dict]) -> str:
 
 
 def compare_text(results: List[dict]) -> str:
-    return "\n".join(_text_table(COMPARE_HEADERS, compare_rows(results))) + "\n"
+    headers, rows, shared = compare_table(results)
+    facts = _shared_facts(results, shared)
+    head = [" | ".join(facts), ""] if facts else []
+    return "\n".join(head + _text_table(headers, rows, left=headers.index("gen tok/s"))) + "\n"
 
 
 # --------------------------------------------------------------------------- PNG
@@ -401,23 +425,10 @@ def render_compare_png(results: List[dict], path) -> Path:
     _spaced(draw, (M, y), "AMAGI-TOKBENCH  ·  SIDE BY SIDE", fonts.get(15, 600), CORAL, 2.2)
     y += 34
     draw.text((M, y), f"{len(results)} runs, same prompt set", font=fonts.get(42, 700), fill=INK)
-    y += 58
-    gpus = sorted({gpu_text(r.get("vram")) for r in results} - {None})
-    y += 56
+    y += 114
 
-    rows = compare_rows(results)
-    headers = list(COMPARE_HEADERS)
-    # drop columns that say the same thing on every row; the subtitle carries them instead
-    shared = []
-    if len({r[1] for r in rows}) == 1:
-        shared.append(rows[0][1])
-        rows = [[r[0]] + r[2:] for r in rows]
-        headers.pop(1)
-    qi = headers.index("quant")
-    if all(r[qi] == "-" or r[qi].lower() in r[0].lower() for r in rows):
-        rows = [r[:qi] + r[qi + 1:] for r in rows]
-        headers.pop(qi)
-    sub = shared + (["GPU: " + ", ".join(gpus)] if gpus else [])
+    headers, rows, shared = compare_table(results)
+    sub = _shared_facts(results, shared)
     if sub:
         draw.text((M, y - 56), _fit(draw, "  ·  ".join(sub), fonts.get(21, 500), W - 2 * M),
                   font=fonts.get(21, 500), fill=MUTED)
