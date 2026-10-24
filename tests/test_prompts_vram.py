@@ -76,4 +76,4 @@ def test_split_command_remote():
 def test_results_never_carry_the_smi_command():
     assert public_source("nvidia-smi") == "nvidia-smi"
     assert public_source("/usr/bin/nvidia-smi") == "nvidia-smi"
-    assert public_source("ssh admin@gpu-box.lan nvidia-smi") == "nvidia-smi (custom command)"
+    assert public_source("ssh -p 2222 gpu-box nvidia-smi") == "nvidia-smi (custom command)"

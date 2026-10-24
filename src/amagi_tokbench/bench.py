@@ -129,7 +129,7 @@ def run_benchmark(
         "vram": vram,
         "settings": {
             "prompt_set": PROMPT_SET_VERSION,
-            "prompt_set_sha256": prompt_set_hash(),
+            "prompt_set_hash": "sha256:" + prompt_set_hash()[:16],
             "runs": runs,
             "warmup": warmup,
             "temperature": 0,

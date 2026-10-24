@@ -31,7 +31,7 @@
   },
   "settings": {
     "prompt_set": "v1",
-    "prompt_set_sha256": "f8187fc0240defb6dacc290a4106450417a77a84f88d3d5c2ca6d7b63576d953",
+    "prompt_set_hash": "sha256:f8187fc0240defb6",
     "runs": 3,
     "warmup": 1,
     "temperature": 0,

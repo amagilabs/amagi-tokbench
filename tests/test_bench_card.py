@@ -61,6 +61,7 @@ def test_run_benchmark_against_fake_server(fake_server, kind):
         assert c["median"]["prompt_tokens"] > 0
     assert result["summary"]["gen_case"] == "short" and result["summary"]["pp_case"] == "medium"
     assert result["settings"]["temperature"] == 0 and result["settings"]["runs"] == 2
+    assert result["settings"]["prompt_set_hash"] == "sha256:f8187fc0240defb6"
     assert any("warmup" in m for m in messages)
 
 
