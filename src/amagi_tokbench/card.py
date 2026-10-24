@@ -53,7 +53,10 @@ def gpu_text(vram: Optional[dict]) -> Optional[str]:
 
 def model_text(result: dict) -> str:
     b = result.get("backend") or {}
-    return b.get("model_file") or b.get("model") or "unknown model"
+    name = b.get("model_file") or b.get("model") or "unknown model"
+    if b.get("model_file"):
+        name = re.split(r"[\\/]", name)[-1]
+    return re.sub(r"\.gguf$", "", name, flags=re.I)
 
 
 def backend_text(result: dict) -> str:
@@ -62,7 +65,7 @@ def backend_text(result: dict) -> str:
     return f"{name} {b['version']}" if b.get("version") else name
 
 
-def subtitle(result: dict) -> str:
+def subtitle(result: dict, sep: str = " · ") -> str:
     b = result.get("backend") or {}
     parts = [backend_text(result)]
     model = model_text(result)
@@ -73,7 +76,7 @@ def subtitle(result: dict) -> str:
     gpu = gpu_text(result.get("vram"))
     if gpu:
         parts.append(gpu)
-    return " · ".join(parts)
+    return sep.join(parts)
 
 
 def headline_items(result: dict):
@@ -91,12 +94,15 @@ def headline_items(result: dict):
 
 def method_line(result: dict) -> str:
     st = result.get("settings") or {}
-    date = (result.get("created") or "")[:10]
     return (
         f"Median of {st.get('runs', '?')} runs per case after {st.get('warmup', 0)} warmup. "
-        f"Prompt set {st.get('prompt_set', '?')}, temperature 0, timed client-side from the streamed reply. "
-        f"amagi-tokbench {result.get('tool_version', '?')}, {date}."
+        f"Prompt set {st.get('prompt_set', '?')}, temperature 0, timed client-side on the stream."
     )
+
+
+def stamp_line(result: dict) -> str:
+    date = (result.get("created") or "")[:10]
+    return f"amagi-tokbench {result.get('tool_version', '?')}, {date}."
 
 
 def _has_server(cases) -> bool:
@@ -147,7 +153,7 @@ def to_markdown(result: dict) -> str:
         "",
     ]
     lines += _md_table(headers, case_rows(result, with_server))
-    lines += ["", f"*{method_line(result)}* [{REPO_URL.replace('https://', '')}]({REPO_URL})"]
+    lines += ["", f"*{method_line(result)} {stamp_line(result)}* [{REPO_URL.replace('https://', '')}]({REPO_URL})"]
     for w in result.get("warnings") or []:
         lines += ["", f"Note: {w}"]
     return "\n".join(lines) + "\n"
@@ -162,7 +168,7 @@ def _text_table(headers, rows) -> List[str]:
 
 def to_text(result: dict) -> str:
     items = headline_items(result)
-    lines = [model_text(result), subtitle(result)]
+    lines = [model_text(result), subtitle(result, " | ")]
     if result.get("label"):
         lines.append(result["label"])
     lines.append("")
@@ -277,7 +283,11 @@ def _footer(img, draw, fonts, text, W, H, M):
     except Exception:
         x_icon = W - M - rw - 4
     draw.text((W - M - rw, y), right, font=f, fill=INK)
-    draw.text((M, y), _fit(draw, text, fonts.get(14, 400), x_icon - M - 24), font=fonts.get(14, 400), fill=MUTED)
+    lines = [text] if isinstance(text, str) else list(text)
+    small = fonts.get(13, 400)
+    top = y + 9 - 9 * len(lines)
+    for i, line in enumerate(lines):
+        draw.text((M, top + 18 * i), _fit(draw, line, small, x_icon - M - 24), font=small, fill=MUTED)
 
 
 def _table(draw, fonts, x0, y, width, headers, rows, left_cols=1, row_h=40, first_bold=True):
@@ -367,10 +377,10 @@ def render_png(result: dict, path) -> Path:
                    for h in headers]
     _table(draw, fonts, M, y, W - 2 * M, headers, case_rows(result, with_server))
 
-    footer = method_line(result)
+    second = stamp_line(result)
     if (result.get("vram") or {}).get("peak_mib"):
-        footer += " VRAM = peak memory.used on the GPU, whole run."
-    _footer(img, draw, fonts, footer, W, H, M)
+        second = "VRAM = peak memory.used on the GPU over the whole run. " + second
+    _footer(img, draw, fonts, [method_line(result), second], W, H, M)
     path = Path(path)
     img.save(path, optimize=True)
     return path

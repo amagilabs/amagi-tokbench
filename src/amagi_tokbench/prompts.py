@@ -83,13 +83,13 @@ CASES = (
     ),
     Case(
         name="medium",
-        description="about 500 prompt tokens: everyday chat with context",
+        description="about 600 prompt tokens: everyday chat with context",
         prompt=_ASK_LONG + _log_text(seed=618, entries=18),
         max_tokens=128,
     ),
     Case(
         name="long",
-        description="about 2,000 prompt tokens: prompt processing speed",
+        description="about 2,500 prompt tokens: prompt processing speed",
         prompt=_ASK_LONG + _log_text(seed=1066, entries=74),
         max_tokens=128,
     ),

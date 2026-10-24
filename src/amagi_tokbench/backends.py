@@ -295,7 +295,7 @@ def _rate(n, duration, per_second) -> Optional[float]:
 # --------------------------------------------------------------------------- backends
 
 _QUANT_RE = re.compile(
-    r"(?<![A-Za-z0-9])(I?Q\d+_[A-Z0-9_]+?|Q\d+_\d|F16|BF16|F32|MXFP4|FP8|AWQ|GPTQ|INT8|INT4)(?=[.\-_]|$)",
+    r"(?<![A-Za-z0-9])(I?Q\d+(?:_[A-Z0-9]+)+|F16|BF16|F32|MXFP4|FP8|AWQ|GPTQ|INT8|INT4)(?![A-Za-z0-9])",
     re.IGNORECASE,
 )
 
