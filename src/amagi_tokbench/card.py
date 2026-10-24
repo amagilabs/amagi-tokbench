@@ -187,11 +187,13 @@ def to_text(result: dict) -> str:
 
 def compare_rows(results: List[dict]) -> List[List[str]]:
     rows = []
+    # name rows by label only when the labels tell the runs apart; otherwise by model
+    by_label = len({r.get("label") for r in results}) == len(results) and all(r.get("label") for r in results)
     for r in results:
         s = r.get("summary") or {}
         b = r.get("backend") or {}
         rows.append([
-            r.get("label") or model_text(r),
+            r["label"] if by_label else model_text(r),
             backend_text(r),
             b.get("quant") or "-",
             fmt_rate(s.get("gen_tps")),
@@ -295,7 +297,8 @@ def _table(draw, fonts, x0, y, width, headers, rows, left_cols=1, row_h=40, firs
     hf, cf, bf = fonts.get(13, 600), fonts.get(19, 400), fonts.get(19, 600)
     # first column takes what's left after fitting the numeric ones
     col_w = [max(draw.textlength(h.upper(), font=hf) + 6 * len(h),
-                 *(draw.textlength(r[i], font=cf) for r in rows)) + 28 for i, h in enumerate(headers)]
+                 *(draw.textlength(r[i], font=cf) for r in rows)) + (28 if i < left_cols else 40)
+             for i, h in enumerate(headers)]
     fixed = sum(col_w[left_cols:])
     if left_cols:
         rest = max(width - fixed, 160)
@@ -400,28 +403,47 @@ def render_compare_png(results: List[dict], path) -> Path:
     draw.text((M, y), f"{len(results)} runs, same prompt set", font=fonts.get(42, 700), fill=INK)
     y += 58
     gpus = sorted({gpu_text(r.get("vram")) for r in results} - {None})
-    if gpus:
-        draw.text((M, y), _fit(draw, "GPU: " + ", ".join(gpus), fonts.get(21, 500), W - 2 * M),
-                  font=fonts.get(21, 500), fill=MUTED)
     y += 56
 
     rows = compare_rows(results)
-    end = _table(draw, fonts, M, y, W - 2 * M, COMPARE_HEADERS, rows, left_cols=3, row_h=44)
-    # generation-speed bars under the table
-    rates = [(r.get("summary") or {}).get("gen_tps") or 0 for r in results]
-    top = max(rates) if rates and max(rates) > 0 else 0
-    if top and end + 40 + 26 * len(results) < H - 80:
-        y = end + 30
-        _spaced(draw, (M, y), "GENERATION TOK/S", fonts.get(13, 600), CORAL, 1.5)
+    headers = list(COMPARE_HEADERS)
+    # drop columns that say the same thing on every row; the subtitle carries them instead
+    shared = []
+    if len({r[1] for r in rows}) == 1:
+        shared.append(rows[0][1])
+        rows = [[r[0]] + r[2:] for r in rows]
+        headers.pop(1)
+    qi = headers.index("quant")
+    if all(r[qi] == "-" or r[qi].lower() in r[0].lower() for r in rows):
+        rows = [r[:qi] + r[qi + 1:] for r in rows]
+        headers.pop(qi)
+    sub = shared + (["GPU: " + ", ".join(gpus)] if gpus else [])
+    if sub:
+        draw.text((M, y - 56), _fit(draw, "  ·  ".join(sub), fonts.get(21, 500), W - 2 * M),
+                  font=fonts.get(21, 500), fill=MUTED)
+    end = _table(draw, fonts, M, y, W - 2 * M, headers, rows, left_cols=headers.index("gen tok/s"), row_h=44)
+
+    # bars under the table: generation and prompt speed, each scaled to its own best run
+    names = [r[0] for r in rows]
+    bar_font, val_font = fonts.get(15, 500), fonts.get(15, 600)
+    lab_w = min(max(draw.textlength(n, font=bar_font) for n in names) + 24, 420)
+    groups = [("GENERATION TOK/S", "gen_tps"), ("PROMPT PROCESSING TOK/S", "pp_tps")]
+    y = end + 30
+    for title, key in groups:
+        rates = [(r.get("summary") or {}).get(key) or 0 for r in results]
+        top = max(rates) if rates else 0
+        if not top or y + 26 + 26 * len(results) > H - 84:
+            continue
+        _spaced(draw, (M, y), title, fonts.get(13, 600), CORAL, 1.5)
         y += 26
-        lab_w = 300
-        for r, rate in zip(results, rates):
-            name = _fit(draw, r.get("label") or model_text(r), fonts.get(15, 500), lab_w - 10)
-            draw.text((M, y), name, font=fonts.get(15, 500), fill=INK)
+        for name, rate in zip(names, rates):
+            draw.text((M, y), _fit(draw, name, bar_font, lab_w - 14), font=bar_font, fill=INK)
             bw = (W - 2 * M - lab_w - 90) * rate / top
-            draw.rounded_rectangle([M + lab_w, y + 2, M + lab_w + max(bw, 4), y + 18], radius=6, fill=CORAL)
-            draw.text((M + lab_w + bw + 10, y), fmt_rate(rate), font=fonts.get(15, 600), fill=INK)
+            draw.rounded_rectangle([M + lab_w, y + 2, M + lab_w + max(bw, 4), y + 18], radius=6,
+                                   fill=CORAL if key == "gen_tps" else GOLD)
+            draw.text((M + lab_w + bw + 10, y), fmt_rate(rate), font=val_font, fill=INK)
             y += 26
+        y += 16
     sets = sorted({(r.get("settings") or {}).get("prompt_set", "?") for r in results})
     _footer(img, draw, fonts, f"Prompt set {', '.join(sets)}. Each number is the median of its own run.", W, H, M)
     path = Path(path)
