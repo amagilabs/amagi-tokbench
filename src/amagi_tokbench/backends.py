@@ -308,6 +308,13 @@ def quant_from_name(name: str) -> Optional[str]:
     return hits[-1].upper() if hits else None
 
 
+def public_model_name(model: Optional[str]) -> Optional[str]:
+    """Results files get shared, so a model id that is a local path keeps only the file name."""
+    if model and (model.startswith(("/", "~", "\\")) or re.match(r"^[A-Za-z]:[\\/]", model)):
+        return re.split(r"[\\/]", model)[-1]
+    return model
+
+
 class Backend:
     kind = "openai"
 
@@ -336,7 +343,7 @@ class Backend:
 
     def describe(self) -> dict:
         """Server facts for the card. Never raises: missing facts are just left out."""
-        info = {"kind": self.kind, "name": self.label, "url": self.url, "model": self.model}
+        info = {"kind": self.kind, "name": self.label, "model": public_model_name(self.model)}
         try:
             models = self._get("/v1/models").get("data") or []
             for m in models:
@@ -445,7 +452,7 @@ class OllamaBackend(Backend):
             return {}
 
     def describe(self) -> dict:
-        info = {"kind": self.kind, "name": self.label, "url": self.url, "model": self.model}
+        info = {"kind": self.kind, "name": self.label, "model": public_model_name(self.model)}
         v = self._safe("/api/version")
         if v.get("version"):
             info["version"] = str(v["version"])

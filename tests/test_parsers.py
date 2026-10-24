@@ -8,6 +8,7 @@ from amagi_tokbench.backends import (
     normalize_url,
     parse_ollama_stream,
     parse_openai_stream,
+    public_model_name,
     quant_from_name,
 )
 
@@ -114,3 +115,15 @@ def test_quant_from_name(name, quant):
 ])
 def test_normalize_url(raw, clean):
     assert normalize_url(raw) == clean
+
+
+@pytest.mark.parametrize("model,public", [
+    ("/srv/llm/models/Qwen2.5-7B-Instruct-Q4_K_M.gguf", "Qwen2.5-7B-Instruct-Q4_K_M.gguf"),
+    (r"D:\llm\models\x.gguf", "x.gguf"),
+    ("~/models/y.gguf", "y.gguf"),
+    ("Qwen/Qwen2.5-7B-Instruct-AWQ", "Qwen/Qwen2.5-7B-Instruct-AWQ"),
+    ("qwen2.5:7b", "qwen2.5:7b"),
+    (None, None),
+])
+def test_public_model_name_drops_local_paths(model, public):
+    assert public_model_name(model) == public
