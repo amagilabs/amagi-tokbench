@@ -13,7 +13,7 @@ servers and does not load models. It benchmarks whatever is already running.
 
 - The user asks how many tokens per second their local model gets.
 - The user wants to compare models, quants, context sizes, backends or GPUs on equal terms.
-- The user wants to know how much VRAM a model takes while it is actually working.
+- The user wants to know how much VRAM a model takes while it is generating.
 - The user wants a card or table to paste into an issue, a README or a forum post.
 
 ## How to use it
@@ -69,13 +69,14 @@ it. Temperature is 0 and generation is forced to the token limit where the serve
 
 ## Privacy
 
-Results files keep the model's file name but drop local directory paths, and they do not store
-the server URL. The `--label` text goes into the card as written, so keep host names and personal
+Results files keep the model's file name but drop local directory paths. They do not store the
+server URL or the `--nvidia-smi` command. The `--label` text goes into the card as written, so keep host names and personal
 details out of it if the card will be shared.
 
 ## Limits
 
-- VRAM needs `nvidia-smi`. AMD, Intel and Apple GPUs run fine but show no VRAM figure.
+- VRAM needs an NVIDIA GPU and `nvidia-smi`. Without it the speed numbers still work and the card
+  shows no VRAM figure.
 - Token counts come from the server (`usage`, llama.cpp `timings`, or Ollama counters). An
   OpenAI-compatible server that sends none falls back to counting stream chunks, and the card
   shows no prompt rate.
