@@ -102,6 +102,7 @@ def get_cases(names=None):
     """Return the cases to run, in the fixed order, optionally filtered by name."""
     if not names:
         return list(CASES)
+    names = [n.strip() for n in names if n.strip()]
     unknown = [n for n in names if n not in CASE_NAMES]
     if unknown:
         raise ValueError(f"unknown case {', '.join(unknown)} (choose from {', '.join(CASE_NAMES)})")

@@ -7,6 +7,7 @@ anything that ends up running nvidia-smi, so a server on another box works too:
 
 from __future__ import annotations
 
+import os
 import shlex
 import shutil
 import subprocess
@@ -28,11 +29,15 @@ def parse_line(line: str) -> Optional[dict]:
         total = float(parts[-1])
     except ValueError:
         return None
-    name = ",".join(parts[1:-2]).strip()
+    name = ", ".join(parts[1:-2]).strip()
     return {"index": index, "name": name, "used_mib": used, "total_mib": total}
 
 
 def split_command(cmd: str) -> List[str]:
+    """Split a command line. On Windows, backslashes in paths stay put (quote paths with spaces)."""
+    if os.name == "nt":
+        parts = shlex.split(cmd, posix=False)
+        return [p[1:-1] if len(p) >= 2 and p[0] == p[-1] and p[0] in "\"'" else p for p in parts]
     return shlex.split(cmd, posix=True)
 
 

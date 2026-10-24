@@ -9,9 +9,11 @@ from typing import Callable, List, Optional
 
 from . import __version__
 from .backends import SEED, Backend, Sample
-from .prompts import PROMPT_SET_VERSION, Case, prompt_set_hash, with_nonce
+from .prompts import CASES, PROMPT_SET_VERSION, Case, prompt_set_hash, with_nonce
 
 MIN_GEN_TOKENS = 32
+# long/medium prompt-token ratio below this share of their word ratio means the long prompt got cut
+TRUNCATION_RATIO = 0.85
 
 
 def _median(values) -> Optional[float]:
@@ -67,7 +69,9 @@ def check_warnings(cases: List[dict]) -> List[str]:
         if m["prompt_tokens"] is None:
             warnings.append(f"{c['name']}: the server did not report prompt tokens, so prompt speed is unknown")
     by_name = {c["name"]: c["median"]["prompt_tokens"] for c in cases}
-    if by_name.get("long") and by_name.get("medium") and by_name["long"] < 2.5 * by_name["medium"]:
+    words = {c.name: c.words for c in CASES}
+    expected = words["long"] / words["medium"]
+    if by_name.get("long") and by_name.get("medium") and by_name["long"] < TRUNCATION_RATIO * expected * by_name["medium"]:
         warnings.append(
             "long: the prompt came back shorter than expected; the server's context window may be "
             "cutting it (Ollama: try --num-ctx 4096)"

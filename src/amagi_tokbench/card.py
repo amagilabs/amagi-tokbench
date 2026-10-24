@@ -333,7 +333,7 @@ def render_png(result: dict, path) -> Path:
     W, M = 1200, 56
     cases = result.get("cases") or []
     with_server = _has_server(cases)
-    H = max(675, 470 + 40 * len(cases) + (28 if result.get("label") else 0) + 90)
+    H = max(675, 470 + 40 * len(cases) + (28 if result.get("label") else 0) + 85)
     img = Image.new("RGB", (W, H), OFF)
     draw = ImageDraw.Draw(img)
     fonts = _Fonts()
