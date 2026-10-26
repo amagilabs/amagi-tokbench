@@ -1,0 +1,225 @@
+{
+  "tool": "amagi-tokbench",
+  "tool_version": "0.1.0",
+  "created": "2026-10-26T06:31:30Z",
+  "label": "RTX 3090, Ollama 0.40.11",
+  "backend": {
+    "kind": "ollama",
+    "name": "Ollama",
+    "model": "qwen2.5-7b-q4km:latest",
+    "version": "0.40.11",
+    "quant": "Q4_K_M",
+    "params": "7.6B",
+    "family": "qwen2",
+    "context": 4096,
+    "ollama_size_vram_mib": 4535
+  },
+  "vram": {
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 3090",
+        "total_mib": 24576.0,
+        "start_mib": 9.0,
+        "peak_mib": 4870.0
+      }
+    ],
+    "peak_mib": 4870.0,
+    "total_mib": 24576.0,
+    "samples": 313,
+    "source": "nvidia-smi"
+  },
+  "settings": {
+    "prompt_set": "v1",
+    "prompt_set_hash": "sha256:f8187fc0240defb6",
+    "runs": 3,
+    "warmup": 1,
+    "temperature": 0,
+    "seed": 42,
+    "timing": "client-side, streamed"
+  },
+  "cases": [
+    {
+      "name": "short",
+      "description": "short chat prompt, long answer: generation speed",
+      "max_tokens": 256,
+      "runs": [
+        {
+          "ttft_s": 0.021130237000761554,
+          "gen_s": 1.0385455450013978,
+          "total_s": 1.0667034660000354,
+          "gen_tokens": 150,
+          "prompt_tokens": 71,
+          "token_source": "server",
+          "server_pp_tps": 4113.080755416522,
+          "server_gen_tps": 143.45775264823013,
+          "finish_reason": "stop",
+          "text_chars": 744,
+          "pp_tps": 3360.113755346951,
+          "gen_tps": 143.4698754591446
+        },
+        {
+          "ttft_s": 0.022577412993996404,
+          "gen_s": 0.96725309699832,
+          "total_s": 0.9969391359918518,
+          "gen_tokens": 140,
+          "prompt_tokens": 67,
+          "token_source": "server",
+          "server_pp_tps": 3884.5083487940633,
+          "server_gen_tps": 143.69084299312132,
+          "finish_reason": "stop",
+          "text_chars": 660,
+          "pp_tps": 2967.56763132322,
+          "gen_tps": 143.70592395243727
+        },
+        {
+          "ttft_s": 0.023231401995872147,
+          "gen_s": 0.997464782994939,
+          "total_s": 1.0277965189889073,
+          "gen_tokens": 144,
+          "prompt_tokens": 68,
+          "token_source": "server",
+          "server_pp_tps": 3838.9883136679277,
+          "server_gen_tps": 143.3303605554848,
+          "finish_reason": "stop",
+          "text_chars": 696,
+          "pp_tps": 2927.0725895958635,
+          "gen_tps": 143.36345747529572
+        }
+      ],
+      "median": {
+        "prompt_tokens": 68,
+        "gen_tokens": 144,
+        "ttft_ms": 22.577412993996404,
+        "pp_tps": 2967.56763132322,
+        "gen_tps": 143.4698754591446,
+        "server_pp_tps": 3884.5083487940633,
+        "server_gen_tps": 143.45775264823013
+      }
+    },
+    {
+      "name": "medium",
+      "description": "about 600 prompt tokens: everyday chat with context",
+      "max_tokens": 128,
+      "runs": [
+        {
+          "ttft_s": 0.12966851999226492,
+          "gen_s": 0.8979745190008543,
+          "total_s": 1.0276690649916418,
+          "gen_tokens": 128,
+          "prompt_tokens": 636,
+          "token_source": "server",
+          "server_pp_tps": 5158.025352181212,
+          "server_gen_tps": 142.5234217201241,
+          "finish_reason": "length",
+          "text_chars": 612,
+          "pp_tps": 4904.8142142590905,
+          "gen_tps": 141.42940285355598
+        },
+        {
+          "ttft_s": 0.13650015799794346,
+          "gen_s": 0.8978553250053665,
+          "total_s": 1.0343747839942807,
+          "gen_tokens": 128,
+          "prompt_tokens": 637,
+          "token_source": "server",
+          "server_pp_tps": 5152.221035944223,
+          "server_gen_tps": 142.5643767263655,
+          "finish_reason": "length",
+          "text_chars": 607,
+          "pp_tps": 4666.661265033827,
+          "gen_tps": 141.44817818977788
+        },
+        {
+          "ttft_s": 0.14502914500189945,
+          "gen_s": 0.8975291950046085,
+          "total_s": 1.042588300013449,
+          "gen_tokens": 128,
+          "prompt_tokens": 637,
+          "token_source": "server",
+          "server_pp_tps": 5241.504155352588,
+          "server_gen_tps": 142.59471129584057,
+          "finish_reason": "length",
+          "text_chars": 607,
+          "pp_tps": 4392.220611875338,
+          "gen_tps": 141.49957539748655
+        }
+      ],
+      "median": {
+        "prompt_tokens": 637,
+        "gen_tokens": 128,
+        "ttft_ms": 136.50015799794346,
+        "pp_tps": 4666.661265033827,
+        "gen_tps": 141.44817818977788,
+        "server_pp_tps": 5158.025352181212,
+        "server_gen_tps": 142.5643767263655
+      }
+    },
+    {
+      "name": "long",
+      "description": "about 2,500 prompt tokens: prompt processing speed",
+      "max_tokens": 128,
+      "runs": [
+        {
+          "ttft_s": 0.5026519239909248,
+          "gen_s": 0.9211478240031283,
+          "total_s": 1.4238268909975886,
+          "gen_tokens": 128,
+          "prompt_tokens": 2470,
+          "token_source": "server",
+          "server_pp_tps": 5194.728717385727,
+          "server_gen_tps": 138.92039318812536,
+          "finish_reason": "length",
+          "text_chars": 521,
+          "pp_tps": 4913.937223971701,
+          "gen_tps": 137.8714650251062
+        },
+        {
+          "ttft_s": 0.5424749439989682,
+          "gen_s": 0.9223234289966058,
+          "total_s": 1.464867136994144,
+          "gen_tokens": 128,
+          "prompt_tokens": 2470,
+          "token_source": "server",
+          "server_pp_tps": 5195.908905409215,
+          "server_gen_tps": 138.74316039576485,
+          "finish_reason": "length",
+          "text_chars": 575,
+          "pp_tps": 4553.205686868918,
+          "gen_tps": 137.69573232912785
+        },
+        {
+          "ttft_s": 0.5481714010093128,
+          "gen_s": 0.9213852469983976,
+          "total_s": 1.469599438001751,
+          "gen_tokens": 128,
+          "prompt_tokens": 2472,
+          "token_source": "server",
+          "server_pp_tps": 5180.09853083856,
+          "server_gen_tps": 138.88813537252943,
+          "finish_reason": "length",
+          "text_chars": 552,
+          "pp_tps": 4509.538431681159,
+          "gen_tps": 137.8359382394375
+        }
+      ],
+      "median": {
+        "prompt_tokens": 2470,
+        "gen_tokens": 128,
+        "ttft_ms": 542.4749439989682,
+        "pp_tps": 4553.205686868918,
+        "gen_tps": 137.8359382394375,
+        "server_pp_tps": 5194.728717385727,
+        "server_gen_tps": 138.88813537252943
+      }
+    }
+  ],
+  "summary": {
+    "gen_tps": 143.4698754591446,
+    "pp_tps": 4553.205686868918,
+    "ttft_ms": 22.577412993996404,
+    "gen_case": "short",
+    "pp_case": "long"
+  },
+  "warnings": []
+}
